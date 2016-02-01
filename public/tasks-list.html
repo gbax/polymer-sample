@@ -1,0 +1,107 @@
+<link rel="import" href="bower_components/iron-flex-layout/iron-flex-layout.html"/>
+<link rel='import' href='bower_components/polymer/polymer.html'/>
+<link rel='import' href='bower_components/paper-toolbar/paper-toolbar.html'/>
+<link rel='import' href='bower_components/paper-button/paper-button.html'/>
+<link rel='import' href='bower_components/paper-fab/paper-fab.html'/>
+<link rel='import' href='bower_components/paper-listbox/paper-listbox.html'/>
+<link rel='import' href='bower_components/paper-item/paper-item.html'/>
+<link rel='import' href='bower_components/paper-checkbox/paper-checkbox.html'/>
+<link rel='import' href='bower_components/paper-icon-button/paper-icon-button.html'/>
+<link rel='import' href='bower_components/paper-input/paper-input.html'/>
+<link rel='import' href='bower_components/paper-dialog/paper-dialog.html'/>
+<link rel='import' href='bower_components/iron-icons/iron-icons.html'/>
+<dom-module id='tasks-list'>
+    <template>
+        <!-- Create a toolbar/actionbar -->
+        <paper-toolbar>
+            <div class="title" style="color: white"> My Tasks</div>
+        </paper-toolbar>
+
+        <div>
+            <!-- Create a list of tasks -->
+            <paper-listbox>
+                <template is='dom-repeat' items='{{ tasks }}'>
+                    <!-- Create an individual task -->
+                    <paper-item>
+                        <paper-checkbox checked='{{ item.isComplete }}' class='flex-11 taskBox' on-change='toggleTask'>
+                            {{ item.taskName }}
+                        </paper-checkbox>
+                        <paper-icon-button
+                                icon='delete'
+                                class='flex-1'
+                                style='color: gray'
+                                on-click='deleteTask'>
+                        </paper-icon-button>
+                    </paper-item>
+                </template>
+            </paper-listbox>
+
+            <!-- Create a floating action button -->
+            <paper-fab icon='add'
+                       style='position:absolute; bottom: 30px; right:24px'
+                       on-click='showAddTaskDialog'>
+            </paper-fab>
+
+            <!-- Create a modal dialog -->
+            <paper-dialog id='addTaskDialog' modal>
+                <paper-input label='What do you have to do?' value='{{ latestTaskName }}'>
+                </paper-input>
+                <div class='buttons'>
+                    <paper-button dialog-dismiss>Cancel</paper-button>
+                    <paper-button on-click='addTask'>Add</paper-button>
+                </div>
+            </paper-dialog>
+        </div>
+    </template>
+    <script>
+        Polymer({
+            is: 'tasks-list',
+            ready: function () {
+                this.tasks = [];
+                this.latestTaskName = "";
+                this.updateTasks();
+            },
+            showAddTaskDialog: function () {
+                this.$.addTaskDialog.open();
+            },
+            addTask: function () {
+                localStorage.setItem(this.latestTaskName, 'no');
+                this.latestTaskName = "";
+                this.$.addTaskDialog.close();
+                this.updateTasks();
+            },
+            toggleTask: function (e) {
+                var taskName = e.model.item.taskName;
+                if (e.model.item.isComplete) {
+                    localStorage.setItem(taskName, 'yes');
+                } else {
+                    localStorage.setItem(taskName, 'no');
+                }
+            },
+            deleteTask: function (e) {
+                var taskName = e.model.item.taskName;
+                localStorage.removeItem(taskName);
+                this.updateTasks();
+            },
+            updateTasks: function () {
+                this.splice('tasks', 0);
+                var allStorage = this.allStorage();
+                for (var i = 0; i <  allStorage.length; i++) {
+                    this.push('tasks', allStorage[i]);
+                }
+            },
+            allStorage: function () {
+                var values = [],
+                        keys = Object.keys(localStorage),
+                        i = keys.length;
+                while (i--) {
+                    values.push( {
+                        taskName: keys[i],
+                        isComplete: localStorage.getItem(keys[i]) == 'yes'
+                    });
+                }
+                return values;
+            }
+        });
+    </script>
+</dom-module>
